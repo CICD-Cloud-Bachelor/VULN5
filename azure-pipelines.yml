@@ -7,6 +7,7 @@ pool:
 variables:
   buildConfiguration: 'Release'
   outputDirectory: '$(Build.ArtifactStagingDirectory)/publish'
+  runtimeIdentifier: 'win-x64' # Specify the runtime identifier here
 
 steps:
 # Step 1: Check out the repo
@@ -19,12 +20,18 @@ steps:
   inputs:
     restoreSolution: '**/*.sln'
 
-# Step 3: Build the project
-- task: VSBuild@1
+# Step 3: Build and Publish the project as a standalone executable
+- task: DotNetCoreCLI@2
   inputs:
-    solution: '**/*.sln'
-    configuration: '$(buildConfiguration)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:PublishProfile=FolderProfile /p:OutputPath=$(outputDirectory) /p:SelfContained=true'
+    command: 'publish'
+    publishWebProjects: false
+    projects: '**/*.csproj'
+    arguments: '--configuration $(buildConfiguration) --output $(outputDirectory) --runtime $(runtimeIdentifier) --self-contained true /p:PublishSingleFile=true'
+
+# Optional: List build artifacts for verification
+- script: |
+    ls $(outputDirectory)
+  displayName: 'List build artifacts'
 
 # Step 4: Upload to FTP
 - task: FtpUpload@2
