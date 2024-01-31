@@ -1,0 +1,46 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  outputDirectory: '$(Build.ArtifactStagingDirectory)/publish'
+
+steps:
+# Step 1: Check out the repo
+- checkout: self
+
+# Step 2: Restore NuGet packages
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '**/*.sln'
+
+# Step 3: Build the project
+- task: VSBuild@1
+  inputs:
+    solution: '**/*.sln'
+    configuration: '$(buildConfiguration)'
+    msbuildArgs: '/p:DeployOnBuild=true /p:PublishProfile=FolderProfile /p:OutputPath=$(outputDirectory) /p:SelfContained=true'
+
+# Step 4: Upload to FTP
+- task: FtpUpload@2
+  inputs:
+    credentialsOption: 'inputs'
+    serverUrl: 'ftp://$(FTP_HOST)'
+    username: '$(FTP_USER)'
+    password: '$(FTP_PASS)'
+    rootDirectory: '$(outputDirectory)'
+    remoteDirectory: '/home/$(FTP_USER)/ftp'
+    clean: false
+    cleanContents: false
+    preservePaths: true
+    trustSSL: false
+
+# Optional: Clean up the directory after upload
+- script: |
+    rm -rf $(outputDirectory)
+  displayName: 'Clean up published files'
