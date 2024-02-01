@@ -2,25 +2,24 @@ trigger:
 - main
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'ubuntu-latest'
 
 variables:
   buildConfiguration: 'Release'
   outputDirectory: '$(Build.ArtifactStagingDirectory)/publish'
-  runtimeIdentifier: 'win-x64' # Specify the runtime identifier here
+  runtimeIdentifier: 'linux-x64' # Targeting Linux
 
 steps:
 # Step 1: Check out the repo
 - checkout: self
 
 # Step 2: Restore NuGet packages
-- task: NuGetToolInstaller@1
-
-- task: NuGetCommand@2
+- task: DotNetCoreCLI@2
   inputs:
-    restoreSolution: '**/*.sln'
+    command: 'restore'
+    projects: '**/*.csproj'
 
-# Step 3: Build and Publish the project as a standalone executable
+# Step 3: Build and Publish the project as a standalone Linux executable
 - task: DotNetCoreCLI@2
   inputs:
     command: 'publish'
@@ -29,8 +28,8 @@ steps:
     arguments: '--configuration $(buildConfiguration) --output $(outputDirectory) --runtime $(runtimeIdentifier) --self-contained true /p:PublishSingleFile=true'
 
 # Optional: List build artifacts for verification
-- script: |
-    ls $(outputDirectory)
+- bash: |
+    ls -la $(outputDirectory)
   displayName: 'List build artifacts'
 
 # Step 4: Upload to FTP
@@ -48,6 +47,6 @@ steps:
     trustSSL: false
 
 # Optional: Clean up the directory after upload
-- script: |
+- bash: |
     rm -rf $(outputDirectory)
   displayName: 'Clean up published files'
