@@ -40,7 +40,7 @@ steps:
     username: '$(FTP_USER)'
     password: '$(FTP_PASS)'
     rootDirectory: '$(outputDirectory)'
-    remoteDirectory: '/home/$(FTP_USER)/ftp'
+    remoteDirectory: '/'
     clean: false
     cleanContents: false
     preservePaths: true
